@@ -9,7 +9,7 @@ from Tooltip import *
 from PIL import Image
 from CTkMessagebox import CTkMessagebox
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")
 
 root = customtkinter.CTk()
@@ -577,7 +577,7 @@ def create_multiple_fun():
         show_warning()
         return
     create_kind()
-    create_frame("Username_with_password")
+    create_frame()
 
 
 def display():
