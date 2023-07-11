@@ -25,10 +25,10 @@ class Credentials:
     def create_username_with_password(self, id, username, password, usernameSecret, description, crumb_url):
 
         jenkins_url_createfunction = self.jenkins_url + 'credentials/store/system/domain/_/createCredentials'
-        jenkins_crumb = ''
-
+        print(jenkins_url_createfunction)
         try:
             jenkins_crumb = requests.get(crumb_url, auth=(self.auth_username, self.auth_token))
+            print(jenkins_crumb)
             if jenkins_crumb is not None:
                 print("Response received:")
             else:
@@ -72,8 +72,7 @@ class Credentials:
         response = requests.post(jenkins_url_createfunction,
                                  auth=(self.auth_username, self.auth_token),
                                  headers=Head,
-                                 data={'json': data},
-                                 timeout=1)
+                                 data={'json': data})
         if response.status_code == 200:
             print("Created Credentials successfully")
 
@@ -269,23 +268,24 @@ class Credentials:
             print("ERROR: Failed to establish connection")
             return 'Error'
 
-
-
         crumb = jenkins_crumb.json()["crumb"]
 
         Headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
             'Jenkins-Crumb': crumb
         }
 
         jenkins_url_deletefunction = self.jenkins_url + f'credentials/store/system/domain/_/credential/{id}/doDelete'
+        print(jenkins_url_deletefunction)
+        print(self.auth_username)
+        print(self.auth_token)
+        print(crumb)
         response = requests.post(jenkins_url_deletefunction, auth=(self.auth_username, self.auth_token),
                                   headers=Headers)
-        print(response.status_code)
-        if response.status_code == 200:
-            return ' Credentials Deleted '
 
-        return response
+        print(response.status_code)
+
+        if response.status_code == 200:
+            return response
 
     def get_credentials(self, crumb_url):
 

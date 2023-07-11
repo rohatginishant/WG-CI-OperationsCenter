@@ -42,9 +42,6 @@ new_privatekey = customtkinter.StringVar()
 value1 = customtkinter.IntVar()
 value2 = customtkinter.IntVar()
 
-index = 0
-row = 1
-
 pod_name = customtkinter.StringVar()
 pod_label = customtkinter.StringVar()
 pod_usage = customtkinter.StringVar()
@@ -60,6 +57,8 @@ url = customtkinter.StringVar()
 auth_username = customtkinter.StringVar()
 auth_token = customtkinter.StringVar()
 
+checkbox_index = 0
+checkbox_row = 1
 checkbox_variables = []
 checkboxes = []
 
@@ -70,27 +69,23 @@ def on_checkbox_click(checkbox_index, checkbox):
 
 
 def create_checkbox(name):
-    global index
-    global row
+    global checkbox_index
+    global checkbox_row
 
     checkbox_variable = customtkinter.BooleanVar()
     checkbox_variables.append(checkbox_variable)
 
     checkbox = customtkinter.CTkCheckBox(checkbox_slider_frame, text=name, variable=checkbox_variable,
-                                         command=lambda index=index: on_checkbox_click(index, checkbox),
+                                         command=lambda index=checkbox_index: on_checkbox_click(checkbox_index, checkbox),
                                          font=("Helvetica", 15, "bold"),
                                          checkbox_height=20, checkbox_width=20, width=150, border_width=2,
                                          hover_color="#1F6AA4"
                                          )
-    checkbox.grid(row=row, column=0, pady=10, padx=(40, 20), sticky="nsew")
+    checkbox.grid(row=checkbox_row, column=0, pady=10, padx=(40, 20), sticky="nsew")
     checkboxes.append(checkbox)
 
-    index += 1
-    row += 1
-
-
-def change_appearance_mode_event(new_appearance_mode):
-    customtkinter.set_appearance_mode(new_appearance_mode)
+    checkbox_index += 1
+    checkbox_row += 1
 
 
 def create_kind():
@@ -157,6 +152,98 @@ def create_submit():
                         CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
     create_frame()
 
+def update_test(j):
+    identity = j[0]
+    type = j[2]
+
+    if type == "Username with password":
+        for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
+
+            if boolean_element.get():
+                jenkins_url = item["jenkins__url"]
+                jenkins_auth_username = item["auth__username"]
+                jenkins_auth_password = item["auth__password"]
+                crumb_url = item["crumbIssuer"]
+
+                obj = Credentials(jenkins_url, jenkins_auth_username, jenkins_auth_password)
+                response = obj.update_username_with__password(identity,
+                                                              new_name.get(),
+                                                              new_pass.get(),
+                                                              username_secret.get(),
+                                                              new_description.get(),
+                                                              crumb_url
+                                                              )
+                if response == "Error":
+                    CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
+                else:
+                    if response.status_code == 200:
+                        CTkMessagebox(title="Info", icon="check", message="Updated Successfully !!",
+                                      font=("Helvetica", 14))
+                    else:
+                        CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
+
+
+    else:
+        for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
+
+            if boolean_element.get():
+                jenkins_url = item["jenkins__url"]
+                jenkins_auth_username = item["auth__username"]
+                jenkins_auth_password = item["auth__password"]
+                crumb_url = item["crumbIssuer"]
+
+                obj = Credentials(jenkins_url, jenkins_auth_username, jenkins_auth_password)
+                response = obj.update_ssh_with__privatekey(identity,
+                                                           new_name.get(),
+                                                           new_privatekey.get(),
+                                                           username_secret.get(),
+                                                           new_description.get(),
+                                                           passphrase.get(),
+                                                           crumb_url
+                                                           )
+                if response == "Error":
+                    CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
+                else:
+                    if response.status_code == 200:
+                        CTkMessagebox(title="Info", icon="check", message="Updated Successfully !!",
+                                      font=("Helvetica", 14))
+                    else:
+                        CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
+
+
+def delete_submit(j):
+    confirmation = confirm_delete()
+    if confirmation == "no":
+        return
+
+    identity = j[0]
+
+    for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
+        if boolean_element.get():
+            jenkins_url = item["jenkins__url"]
+            jenkins_auth_username = item["auth__username"]
+            jenkins_auth_password = item["auth__password"]
+            crumb_url = item["crumbIssuer"]
+            obj = Credentials(jenkins_url, jenkins_auth_username, jenkins_auth_password)
+            response = obj.delete(identity, crumb_url)
+
+            print(f"response  ===== {response}")
+            if response == "Error":
+                CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
+                return
+            else:
+                if response:
+                    if response.status_code == 200:
+                        CTkMessagebox(title="Info", icon="check", message="Deleted Successfully !!",
+                                      font=("Helvetica", 14))
+                    else:
+                        CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
+                        return
+
+
+            print_credentials()
+
+
 
 def create_pod_submit():
     for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
@@ -187,17 +274,17 @@ def multiple_functions(j):
     print_credentials()
 
 
-def update_form(j):
+def update_form(set_element):
     for widget in kind_frame.winfo_children():
         widget.destroy()
 
     for widget in form_frame.winfo_children():
         widget.destroy()
 
-    identity = j[0]
-    about = j[1]
-    type = j[2]
-    name = j[3]
+    identity = set_element[0]
+    about = set_element[1]
+    type = set_element[2]
+    name = set_element[3]
 
     response = name
 
@@ -299,98 +386,12 @@ def update_form(j):
         passphrase_entry.insert(0, "****************************************")
 
     submit_button = customtkinter.CTkButton(form_frame, text="Save", font=my_font,
-                                            command=lambda index=identity: multiple_functions(j))
+                                            command=lambda index=identity: multiple_functions(set_element))
     submit_button.grid(row=15, column=1, sticky="w", padx=(10, 20), pady=5)
 
 
-def update_test(j):
-    identity = j[0]
-    type = j[2]
-
-    if type == "Username with password":
-        for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
-
-            if boolean_element.get():
-                jenkins_url = item["jenkins__url"]
-                jenkins_auth_username = item["auth__username"]
-                jenkins_auth_password = item["auth__password"]
-                crumb_url = item["crumbIssuer"]
-
-                obj = Credentials(jenkins_url, jenkins_auth_username, jenkins_auth_password)
-                response = obj.update_username_with__password(identity,
-                                                              new_name.get(),
-                                                              new_pass.get(),
-                                                              username_secret.get(),
-                                                              new_description.get(),
-                                                              crumb_url
-                                                              )
-                if response == "Error":
-                    CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
-                else:
-                    if response.status_code == 200:
-                        CTkMessagebox(title="Info", icon="check", message="Updated Successfully !!",
-                                      font=("Helvetica", 14))
-                    else:
-                        CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
 
 
-    else:
-        for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
-
-            if boolean_element.get():
-                jenkins_url = item["jenkins__url"]
-                jenkins_auth_username = item["auth__username"]
-                jenkins_auth_password = item["auth__password"]
-                crumb_url = item["crumbIssuer"]
-
-                obj = Credentials(jenkins_url, jenkins_auth_username, jenkins_auth_password)
-                response = obj.update_ssh_with__privatekey(identity,
-                                                           new_name.get(),
-                                                           new_privatekey.get(),
-                                                           username_secret.get(),
-                                                           new_description.get(),
-                                                           passphrase.get(),
-                                                           crumb_url
-                                                           )
-                if response == "Error":
-                    CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
-                else:
-                    if response.status_code == 200:
-                        CTkMessagebox(title="Info", icon="check", message="Updated Successfully !!",
-                                      font=("Helvetica", 14))
-                    else:
-                        CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
-
-
-def delete_submit(j):
-    confirmation = confirm_delete()
-    if confirmation == "no":
-        return
-
-    identity = j[0]
-
-    for (jenkins_name, item), select, boolean_element in zip(data.items(), checkbox_variables, checkbox_variables):
-        if boolean_element.get():
-            jenkins_url = item["jenkins__url"]
-            jenkins_auth_username = item["auth__username"]
-            jenkins_auth_password = item["auth__password"]
-            crumb_url = item["crumbIssuer"]
-            obj = Credentials(jenkins_url, jenkins_auth_username, jenkins_auth_password)
-            response = obj.delete(identity, crumb_url)
-
-
-            if response == "Error":
-                CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
-                return
-            else:
-                if response.status_code == 200:
-                    CTkMessagebox(title="Info", icon="check", message="Deleted Successfully !!",
-                                  font=("Helvetica", 14))
-                else:
-                    CTkMessagebox(title="Bad Request", icon="cancel", message="Request timed out", font=my_font)
-                    return
-
-            print_credentials()
 
 def confirm_delete():
     # get yes/no answers
@@ -411,8 +412,8 @@ def create_delete_function(entry):
     return delete_entry
 
 
-def create_update_function(j):
-    return lambda: update_form(j)
+def create_update_function(set_element):
+    return lambda: update_form(set_element)
 
 
 unique_creds = set()
@@ -476,82 +477,83 @@ def print_credentials():
             else:
                 unique_creds = unique_creds.intersection(unique_creds2)
 
-    q = 1
+    row = 1
 
     labela = customtkinter.CTkLabel(form_frame, text="ID", font=my_font)
-    labela.grid(row=q, column=0, padx=20, pady=10, sticky="w")
+    labela.grid(row=row, column=0, padx=20, pady=10, sticky="w")
 
     labelb = customtkinter.CTkLabel(form_frame, text="Name", font=my_font)
-    labelb.grid(row=q, column=1, padx=20, pady=10, sticky="w")
+    labelb.grid(row=row, column=1, padx=20, pady=10, sticky="w")
 
     labelc = customtkinter.CTkLabel(form_frame, text="Kind", font=my_font)
-    labelc.grid(row=q, column=2, padx=20, pady=10, sticky="w")
+    labelc.grid(row=row, column=2, padx=20, pady=10, sticky="w")
 
     labeld = customtkinter.CTkLabel(form_frame, text="Description", font=my_font)
-    labeld.grid(row=q, column=3, padx=20, pady=10, sticky="w")
+    labeld.grid(row=row, column=3, padx=20, pady=10, sticky="w")
 
-    q += 1
+    row += 1
 
-    for j in unique_creds:
+    for set_element in unique_creds:
 
-        texta = j[0]
-        textb = j[1]
-        textc = j[2]
-        textd = j[3]
+        texta = [0]
+        textb = set_element[1]
+        textc = set_element[2]
+        textd = set_element[3]
 
-        if len(j[0]) > 15:
-            texta = j[0][:10]
+        if len(set_element[0]) > 15:
+            texta = set_element[0][:10]
             texta = texta + " .."
 
         button = customtkinter.CTkLabel(form_frame, text=texta, font=my_font,
                                         bg_color="transparent", fg_color="transparent", anchor="w"
                                         )
-        button.grid(row=q, column=0, padx=20, pady=5, sticky="w")
-        CreateToolTip(button, j[0])
+        button.grid(row=row, column=0, padx=20, pady=5, sticky="w")
+        CreateToolTip(button, set_element[0])
 
-        if len(j[3]) > 15:
-            textd = j[3][:10]
+        if len(set_element[3]) > 15:
+            textd = set_element[3][:10]
             textd = textd + " .."
 
         label2 = customtkinter.CTkLabel(form_frame, text=textd, font=my_font)
-        label2.grid(row=q, column=1, padx=20, pady=5, sticky="w")
-        CreateToolTip(label2, j[3])
+        label2.grid(row=row, column=1, padx=20, pady=5, sticky="w")
+        CreateToolTip(label2, set_element[3])
 
-        if len(j[2]) > 15:
-            textc = j[2][:10]
+        if len(set_element[2]) > 15:
+            textc = set_element[2][:10]
             textc = textc + " .."
 
         label3 = customtkinter.CTkLabel(form_frame, text=textc, font=my_font)
-        label3.grid(row=q, column=2, padx=20, pady=5, sticky="w")
-        CreateToolTip(label3, j[2])
+        label3.grid(row=row, column=2, padx=20, pady=5, sticky="w")
+        CreateToolTip(label3, set_element[2])
 
-        if len(j[1]) > 15:
-            textb = j[1][:10]
+
+        if len(set_element[1]) > 15:
+            textb = set_element[1][:10]
             textb = textb + " .."
 
         label4 = customtkinter.CTkLabel(form_frame, text=textb, font=my_font)
-        label4.grid(row=q, column=3, padx=20, pady=5, sticky="w")
-        CreateToolTip(label4, j[1])
+        label4.grid(row=row, column=3, padx=20, pady=5, sticky="w")
+        CreateToolTip(label4, set_element[1])
 
         button1 = customtkinter.CTkButton(
             form_frame,
             text="Update",
             font=my_font,
-            command=create_update_function(j),
+            command=create_update_function(set_element),
             text_color="white"
         )
-        button1.grid(row=q, column=5, padx=(20, 20), pady=5, sticky="e")
+        button1.grid(row=row, column=5, padx=(20, 20), pady=5, sticky="e")
 
         button2 = customtkinter.CTkButton(
             form_frame,
             text="Delete",
             font=my_font,
-            command=create_delete_function(j),
+            command=create_delete_function(set_element),
             text_color="white"
         )
-        button2.grid(row=q, column=6, padx=(10, 10), pady=5, sticky="e")
+        button2.grid(row=row, column=6, padx=(10, 10), pady=5, sticky="e")
 
-        q += 1
+        row += 1
     unique_creds.clear()
 
 
@@ -567,7 +569,7 @@ def pod_select_alert():
 
     create_pod()
 
-def create_multiple_fun():
+def add_credentials_frame():
     count = 0
     for i in checkbox_variables:
         if i.get() == False:
@@ -720,8 +722,6 @@ def add_container_form():
     for widget in form_frame2.winfo_children():
         widget.destroy()
 
-    #  can add frame
-
     label = customtkinter.CTkLabel(form_frame2, text="Add Container", font=("Helvetica", 20, "bold"))
     label.grid(row=place, column=1, pady=(20, 0), padx=(20, 20), sticky='nsew')
     place += 1
@@ -772,9 +772,6 @@ def add_container_form():
 
 
 
-pod_usage.set("Use this node as much as possible")
-
-
 def create_pod():
 
     global place
@@ -786,6 +783,7 @@ def create_pod():
     pod_yaml_merge.set(" ")
     pod_node_seelctor.set(" ")
     pod_workspace_volume.set(" ")
+    pod_usage.set("Use this node as much as possible")
 
 
     for widget in kind_frame.winfo_children():
@@ -900,6 +898,8 @@ def create_pod():
 
 my_font = customtkinter.CTkFont(family="Helvetica", size=16)
 
+# Frames for window
+
 sidebar_frame = customtkinter.CTkFrame(root, width=165, corner_radius=0)
 sidebar_frame.grid(row=0, column=0, padx=(5, 5), pady=20, rowspan=4, sticky="nsew")
 sidebar_frame.grid_rowconfigure((3, 4), weight=1)
@@ -931,7 +931,7 @@ sidebar_button_0 = customtkinter.CTkButton(options_frame, text="Manage Credentia
 sidebar_button_0.grid(row=2, column=0, padx=20, pady=(30, 10))
 
 sidebar_button_1 = customtkinter.CTkButton(options_frame, text="Add Credentials", font=my_font,
-                                           command=create_multiple_fun, fg_color="transparent", hover_color="#1F6AA4")
+                                           command=add_credentials_frame, fg_color="transparent", hover_color="#1F6AA4")
 sidebar_button_1.grid(row=3, column=0, padx=(40, 20), pady=(5, 10))
 
 sidebar_button_2 = customtkinter.CTkButton(options_frame, text="Get Credentials", font=my_font,
@@ -955,7 +955,27 @@ logo_label = customtkinter.CTkLabel(master=title_frame, text="WG CI-OperationsCe
                                     font=("Helvetica", 32, "bold"))
 logo_label.grid(row=0, column=0, padx=(400, 200), pady=(20, 10))
 
+# kind and form frame
+kind_frame = customtkinter.CTkFrame(details_frame, height=10, width=250, bg_color="transparent",
+                                    fg_color="transparent")
+kind_frame.grid(row=0, column=0, padx=(50, 0), pady=(0, 0), sticky="nsew")
+
+form_frame = customtkinter.CTkFrame(details_frame, height=10, width=250, bg_color="transparent",
+                                    fg_color="transparent",border_color="yellow",border_width=0)
+form_frame.grid(row=1, column=0, padx=(50, 5), pady=(0, 0), sticky="nsew")
+
+checkbox_slider_frame.grid_rowconfigure(1, weight=1)
+
 allselect = customtkinter.BooleanVar()
+
+# Insert Image
+IMAGE_WIDTH = 70
+IMAGE_HEIGHT = 100
+IMAGE_PATH = '1200px-Jenkins_logo.svg.png'
+
+your_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(IMAGE_PATH)), size=(IMAGE_WIDTH, IMAGE_HEIGHT))
+label = customtkinter.CTkLabel(master=sidebar_frame, image=your_image, text='')
+label.grid(column=0, row=0, pady=(30, 0), padx=5)
 
 
 def operation():
@@ -985,29 +1005,5 @@ def start():
 
 select_all()
 start()
-
-# kind and form frame
-kind_frame = customtkinter.CTkFrame(details_frame, height=10, width=250, bg_color="transparent",
-                                    fg_color="transparent")
-kind_frame.grid(row=0, column=0, padx=(50, 0), pady=(0, 0), sticky="nsew")
-
-form_frame = customtkinter.CTkFrame(details_frame, height=10, width=250, bg_color="transparent",
-                                    fg_color="transparent",border_color="yellow",border_width=0)
-form_frame.grid(row=1, column=0, padx=(50, 5), pady=(0, 0), sticky="nsew")
-
-# form_frame2 = customtkinter.CTkFrame(details_frame, height=10, width=100, bg_color="transparent",
-#                                     fg_color="transparent", border_color="red", border_width=2)
-# form_frame2.grid(row=2, column=2, padx=(5, 5), pady=(0, 0), sticky="nsew")
-
-checkbox_slider_frame.grid_rowconfigure(1, weight=1)
-
-# Insert Image
-IMAGE_WIDTH = 70
-IMAGE_HEIGHT = 100
-IMAGE_PATH = '1200px-Jenkins_logo.svg.png'
-
-your_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(IMAGE_PATH)), size=(IMAGE_WIDTH, IMAGE_HEIGHT))
-label = customtkinter.CTkLabel(master=sidebar_frame, image=your_image, text='')
-label.grid(column=0, row=0, pady=(30, 0), padx=5)
 
 root.mainloop()
