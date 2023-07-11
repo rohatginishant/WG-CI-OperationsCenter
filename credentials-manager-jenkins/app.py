@@ -274,17 +274,17 @@ def multiple_functions(j):
     print_credentials()
 
 
-def update_form(set_element):
+def update_form(j):
     for widget in kind_frame.winfo_children():
         widget.destroy()
 
     for widget in form_frame.winfo_children():
         widget.destroy()
 
-    identity = set_element[0]
-    about = set_element[1]
-    type = set_element[2]
-    name = set_element[3]
+    identity = j[0]
+    about = j[1]
+    type = j[2]
+    name = j[3]
 
     response = name
 
@@ -386,7 +386,7 @@ def update_form(set_element):
         passphrase_entry.insert(0, "****************************************")
 
     submit_button = customtkinter.CTkButton(form_frame, text="Save", font=my_font,
-                                            command=lambda index=identity: multiple_functions(set_element))
+                                            command=lambda index=identity: multiple_functions(j))
     submit_button.grid(row=15, column=1, sticky="w", padx=(10, 20), pady=5)
 
 
@@ -412,8 +412,8 @@ def create_delete_function(entry):
     return delete_entry
 
 
-def create_update_function(set_element):
-    return lambda: update_form(set_element)
+def create_update_function(j):
+    return lambda: update_form(j)
 
 
 unique_creds = set()
@@ -477,83 +477,83 @@ def print_credentials():
             else:
                 unique_creds = unique_creds.intersection(unique_creds2)
 
-    row = 1
+    q = 1
 
     labela = customtkinter.CTkLabel(form_frame, text="ID", font=my_font)
-    labela.grid(row=row, column=0, padx=20, pady=10, sticky="w")
+    labela.grid(row=q, column=0, padx=20, pady=10, sticky="w")
 
     labelb = customtkinter.CTkLabel(form_frame, text="Name", font=my_font)
-    labelb.grid(row=row, column=1, padx=20, pady=10, sticky="w")
+    labelb.grid(row=q, column=1, padx=20, pady=10, sticky="w")
 
     labelc = customtkinter.CTkLabel(form_frame, text="Kind", font=my_font)
-    labelc.grid(row=row, column=2, padx=20, pady=10, sticky="w")
+    labelc.grid(row=q, column=2, padx=20, pady=10, sticky="w")
 
     labeld = customtkinter.CTkLabel(form_frame, text="Description", font=my_font)
-    labeld.grid(row=row, column=3, padx=20, pady=10, sticky="w")
+    labeld.grid(row=q, column=3, padx=20, pady=10, sticky="w")
 
-    row += 1
+    q += 1
 
-    for set_element in unique_creds:
+    for j in unique_creds:
 
-        texta = [0]
-        textb = set_element[1]
-        textc = set_element[2]
-        textd = set_element[3]
+        texta = j[0]
+        textb = j[1]
+        textc = j[2]
+        textd = j[3]
 
-        if len(set_element[0]) > 15:
-            texta = set_element[0][:10]
+        if len(j[0]) > 15:
+            texta = j[0][:10]
             texta = texta + " .."
 
         button = customtkinter.CTkLabel(form_frame, text=texta, font=my_font,
                                         bg_color="transparent", fg_color="transparent", anchor="w"
                                         )
-        button.grid(row=row, column=0, padx=20, pady=5, sticky="w")
-        CreateToolTip(button, set_element[0])
+        button.grid(row=q, column=0, padx=20, pady=5, sticky="w")
+        CreateToolTip(button, j[0])
 
-        if len(set_element[3]) > 15:
-            textd = set_element[3][:10]
+        if len(j[3]) > 15:
+            textd = j[3][:10]
             textd = textd + " .."
 
         label2 = customtkinter.CTkLabel(form_frame, text=textd, font=my_font)
-        label2.grid(row=row, column=1, padx=20, pady=5, sticky="w")
-        CreateToolTip(label2, set_element[3])
+        label2.grid(row=q, column=1, padx=20, pady=5, sticky="w")
+        CreateToolTip(label2, j[3])
 
-        if len(set_element[2]) > 15:
-            textc = set_element[2][:10]
+        if len(j[2]) > 15:
+            textc = j[2][:10]
             textc = textc + " .."
 
         label3 = customtkinter.CTkLabel(form_frame, text=textc, font=my_font)
-        label3.grid(row=row, column=2, padx=20, pady=5, sticky="w")
-        CreateToolTip(label3, set_element[2])
+        label3.grid(row=q, column=2, padx=20, pady=5, sticky="w")
+        CreateToolTip(label3, j[2])
 
 
-        if len(set_element[1]) > 15:
-            textb = set_element[1][:10]
+        if len(j[1]) > 15:
+            textb = j[1][:10]
             textb = textb + " .."
 
         label4 = customtkinter.CTkLabel(form_frame, text=textb, font=my_font)
-        label4.grid(row=row, column=3, padx=20, pady=5, sticky="w")
-        CreateToolTip(label4, set_element[1])
+        label4.grid(row=q, column=3, padx=20, pady=5, sticky="w")
+        CreateToolTip(label4, j[1])
 
         button1 = customtkinter.CTkButton(
             form_frame,
             text="Update",
             font=my_font,
-            command=create_update_function(set_element),
+            command=create_update_function(j),
             text_color="white"
         )
-        button1.grid(row=row, column=5, padx=(20, 20), pady=5, sticky="e")
+        button1.grid(row=q, column=5, padx=(20, 20), pady=5, sticky="e")
 
         button2 = customtkinter.CTkButton(
             form_frame,
             text="Delete",
             font=my_font,
-            command=create_delete_function(set_element),
+            command=create_delete_function(j),
             text_color="white"
         )
-        button2.grid(row=row, column=6, padx=(10, 10), pady=5, sticky="e")
+        button2.grid(row=q, column=6, padx=(10, 10), pady=5, sticky="e")
 
-        row += 1
+        q += 1
     unique_creds.clear()
 
 
@@ -685,7 +685,7 @@ def add_volume_form():
     form_frame3 = customtkinter.CTkFrame(form_frame, height=10, width=100, bg_color="transparent",
                                          fg_color="transparent",border_width=2)
     form_frame3.grid(row=11, column=1, padx=(5, 5), pady=(10, 10), sticky="nsew")
-    
+
     for widget in form_frame3.winfo_children():
         widget.destroy()
 
